@@ -1,13 +1,15 @@
 const express = require('express')
 const {google} = require('googleapis')
 const OAuth2Data = require("./credentials.json")
+const multer = require("multer")
+const fs = require("fs")
 
 const app = express()
 
 const CLIENT_ID = OAuth2Data.web.client_id
 const CLIENT_SECRET = OAuth2Data.web.client_secret
 const REDIRECT_URI = OAuth2Data.web.redirect_uris[0]
-
+ 
 const oAuth2Client = new google.auth.OAuth2(
     CLIENT_ID,
     CLIENT_SECRET,
@@ -16,6 +18,19 @@ const oAuth2Client = new google.auth.OAuth2(
 
 var name, photo
 var authed = false
+
+var Storage = multer.diskStorage({
+    destination: function (req, file, callback) {
+      callback(null, "./images");
+    },
+    filename: function (req, file, callback) {
+      callback(null, file.fieldname + "_" + Date.now() + "_" + file.originalname);
+    },
+  });
+  
+  var upload = multer({
+    storage: Storage,
+  }).single("file"); //Field name and max count
 
 const SCOPES = "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile"
 
@@ -46,7 +61,7 @@ app.get("/", (req, res) => {
             name = response.data.name
             photo = response.data.picture
 
-            res.render("success", {name:name, photo:photo})
+            res.render("success", {name:name, photo:photo, success:false})
         })
     }
 })
@@ -73,6 +88,44 @@ app.get('/google/callback', (req, res) => {
             }
         })
     }
+})
+
+app.post('/upload', (req, res) => {
+    upload(req, res, function(err) {
+        if(err) throw err
+        console.log(req.file.path)
+        const drive = google.drive({
+            version: 'v3',
+            auth: oAuth2Client
+        })
+
+        const filemetadata = {
+            name: req.file.filename
+        }
+
+        const media = {
+            mimeType: req.file.mimetype,
+            body: fs.createReadStream(req.file.path)
+        }
+
+        drive.files.create({
+            resource: filemetadata,
+            media: media,
+            fields: "id"
+        }, (err, file) => {
+            if(err) throw err
+
+            //delete the file inside the images folder
+
+            fs.unlinkSync(req.file.path)
+            res.render('success', {name:name, photo:photo, success:true})
+        })
+    })
+})
+
+app.get('/logout', (req, res) => {
+    authed = false
+    res.redirect('/')
 })
 
 app.listen(5000, () => {
