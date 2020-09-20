@@ -4,7 +4,7 @@ Steps for Installation:
 1.	Open the Project "ssd-oauth-with-google-drive-master" by using a preferred IDE. (IntelliJ WebStorm recommended)
 2.	Go to the Terminal and enter “npm install”. Wait for the Installation to complete.
 3.	Then type “npm start” in the Terminal.
-4.	After that you will see the message “App Started on Port 5000”.
+4.	After that you will see the message “App Started on Port 5000” in the Terminal.
 5.	All you have left to do is copy below URL and paste it in your preferred browser.
 •	http://localhost:5000/
 6.	Make sure you’re connected to a working Internet connection, otherwise the Bootstrap CSS won’t work properly.
