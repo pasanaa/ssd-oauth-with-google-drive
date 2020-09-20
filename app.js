@@ -16,12 +16,12 @@ const oAuth2Client = new google.auth.OAuth2(
     REDIRECT_URI
 )
 
-var name, photo
+var name, photo, success
 var authed = false
 
 var Storage = multer.diskStorage({
     destination: function (req, file, callback) {
-      callback(null, "./images");
+      callback(null, "./");
     },
     filename: function (req, file, callback) {
       callback(null, file.fieldname + "_" + Date.now() + "_" + file.originalname);
@@ -92,8 +92,10 @@ app.get('/google/callback', (req, res) => {
 
 app.post('/upload', (req, res) => {
     upload(req, res, function(err) {
-        if(err) throw err
-        console.log(req.file.path)
+        if(err) {
+            console.log(err)
+        }
+        // console.log(req.file.path)
         const drive = google.drive({
             version: 'v3',
             auth: oAuth2Client
@@ -113,12 +115,14 @@ app.post('/upload', (req, res) => {
             media: media,
             fields: "id"
         }, (err, file) => {
-            if(err) throw err
-
-            //delete the file inside the images folder
-
-            fs.unlinkSync(req.file.path)
+            if(err) {
+                console.log(err)
+            }
+            console.log('SUCCESS!');
+            fs.unlinkSync(req.file.path);
             res.render('success', {name:name, photo:photo, success:true})
+            success = true;
+            // res.redirect('/')
         })
     })
 })
